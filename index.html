@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAGMA: Multiplier-Augmented Geometric Motion Algorithm</title>
+  <style>
+    :root {
+      --bg: #fdfdfd;
+      --fg: #1a1a1a;
+      --accent: #2a5db0;
+      --accent-light: #e8f0fe;
+      --border: #ddd;
+      --code-bg: #f5f5f5;
+      --card-bg: #fff;
+      --muted: #555;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+    }
+
+    /* ---- Header ---- */
+    header {
+      background: var(--bg);
+      color: var(--fg);
+      padding: 4rem 2rem 3.5rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    header p.subtitle {
+      margin-top: 0.8rem;
+      font-size: 1.15rem;
+      font-weight: 300;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      color: var(--muted);
+    }
+    header .authors {
+      margin-top: 1.2rem;
+      font-size: 1rem;
+    }
+    header .lab {
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    header .badges {
+      margin-top: 1.4rem;
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    header .badge {
+      display: inline-block;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(4px);
+    }
+
+    /* ---- Layout ---- */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    section {
+      padding: 3rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    section:last-child { border-bottom: none; }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: var(--fg);
+      font-weight: 700;
+    }
+    h3 {
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
+      margin-top: 1.2rem;
+    }
+    p { margin-bottom: 0.8rem; }
+    a { color: var(--accent); }
+
+    /* ---- Feature cards ---- */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.2rem;
+      margin-top: 1.2rem;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.3rem;
+    }
+    .feature-card h3 {
+      margin-top: 0;
+      font-size: 1.05rem;
+    }
+    .feature-card p {
+      font-size: 0.92rem;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    /* ---- Videos ---- */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 1.2rem;
+      /* break out of container to use full viewport width */
+      width: 100vw;
+      margin-left: calc(-50vw + 50%);
+      padding: 0 2rem;
+    }
+    .scene-cell {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--card-bg);
+    }
+    .scene-cell .scene-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.6rem 0.8rem;
+      background: var(--accent-light);
+      border-bottom: 1px solid var(--border);
+    }
+    .scene-cell video {
+      width: 100%;
+      display: block;
+    }
+    .scene-cell .vid-caption {
+      padding: 0.3rem 0.8rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--code-bg);
+    }
+    .video-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--card-bg);
+    }
+    .video-card video, .video-card iframe {
+      width: 100%;
+      display: block;
+    }
+    .video-card .caption {
+      padding: 0.8rem 1rem;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    /* ---- Pipeline diagram ---- */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+    }
+    .pipeline .step {
+      background: var(--accent-light);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.8rem 1.2rem;
+      text-align: center;
+      font-size: 0.9rem;
+      min-width: 140px;
+    }
+    .pipeline .step strong { display: block; color: var(--accent); }
+    .pipeline .arrow {
+      font-size: 1.5rem;
+      color: var(--accent);
+      padding: 0 0.5rem;
+    }
+
+    /* ---- Table ---- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.93rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: var(--accent-light);
+      font-weight: 600;
+    }
+
+    /* ---- Code block ---- */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-top: 1rem;
+    }
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+    p code, li code {
+      background: var(--code-bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.88em;
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 600px) {
+      header { padding: 2.5rem 1.2rem 2rem; }
+      header h1 { font-size: 1.7rem; }
+      .pipeline { flex-direction: column; }
+      .pipeline .arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header>
+    <h1>MAGMA</h1>
+    <p class="subtitle">
+      Multiplier-Augmented Geometric Motion Algorithm
+    </p>
+    <p class="authors">
+      C&eacute;sar E. Ramos Chuquiure, Vansh Thakur, Challen Enninful Adu, and Ram Vasudevan
+    </p>
+    <p class="lab">
+      ROAHM Lab, University of Michigan
+    </p>
+  </header>
+
+  <div class="container">
+
+    <!-- ==================== ABSTRACT ==================== -->
+    <section id="abstract">
+      <h2>Abstract</h2>
+      <p>
+        MAGMA (Multiplier-Augmented Geometric Motion Algorithm) is a general trajectory
+        optimizer based on the Affine Geometric Heat Flow (AGHF). It incorporates an
+        augmented Lagrangian framework that is solved via a primal-dual flow.
+      </p>
+      <p>
+        Solving optimal control problems for high-dimensional  systems with
+        constraints is challenging due to nonlinear dynamics and non-convex feasible sets.
+        Prior AGHF-based approaches relied on penalty or barrier formulations, which
+        required extensive hyperparameter tuning and struggled when cost minimization
+        and constraint satisfaction competed.
+      </p>
+    </section>
+
+    <!-- ==================== ADVANTAGES ==================== -->
+    <section id="advantages">
+      <h2>MAGMA features</h2>
+      <div class="features">
+        <div class="feature-card">
+          <h3>Dramatically Reduced Manual Tuning</h3>
+          <p>The dual flow automatically accomodates constraint violations, resulting in a fundamentally different optimization landscape.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Robust Initialization</h3>
+          <p>Barrier methods can be give rise to numerically large values in the gradient for bad initial guesses, MAGMA circumvents that completely!.</p>
+        </div>
+        <div class="feature-card">
+          <h3>High Accuracy</h3>
+          <p>MAGMA retains and betters the solution quality of previous AGHF formulations, while simultaneously being better than classical DDP methods</p>
+        </div>
+        <div class="feature-card">
+          <h3>General Constraints</h3>
+          <p>Handles general nonlinear constraints and arbitrary cost functions, going beyond previous AGHF formulations.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== METHOD ==================== -->
+    <section id="method">
+      <h2>Method</h2>
+      <p>
+        MAGMA extends the AGHF equation to handle constraints by defining an
+        augmented primal-dual AGHF. It establishes a theoretical characterization
+        of the primal-dual AGHF, proving that MAGMA is a gradient flow on an
+        appropriately defined energy.
+      </p>
+      <p>
+        The numerical implementation utilizes a pseudospectral method-of-lines approach.
+        To handle constraints dynamically, it approximates constraint derivatives using
+        a smooth activation function.
+      </p>
+
+      <h3>Two-Phase Solver</h3>
+      <div class="pipeline">
+        <div class="step">
+          <strong>Phase 1</strong>
+          Find a feasible trajectory<br>(no control effort minimization)
+        </div>
+        <span class="arrow">&rarr;</span>
+        <div class="step">
+          <strong>Phase 2</strong>
+          Refine with control effort<br>(u&sup2;) minimization
+        </div>
+        <span class="arrow">&rarr;</span>
+        <div class="step">
+          <strong>Result</strong>
+          Optimized, constraint-satisfying trajectory
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== CONSTRAINTS ====================
+    <section id="constraints">
+      <h2>MAGMA Supports These Constraints</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Key Parameters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>obstacles</code></td>
+            <td>Sphere obstacle avoidance</td>
+            <td><code>obstacles_info</code>, <code>c_cons_obs</code>, <code>k_cons_obs</code></td>
+          </tr>
+          <tr>
+            <td><code>boxes</code></td>
+            <td>Box obstacle avoidance</td>
+            <td><code>boxes_data</code>, <code>joint_radii</code>, <code>c_cons_boxes</code>, <code>k_cons_boxes</code></td>
+          </tr>
+          <tr>
+            <td><code>state</code></td>
+            <td>Joint position / velocity limits</td>
+            <td><code>x_lower</code>, <code>x_upper</code>, <code>c_cons_state</code>, <code>k_cons_state</code></td>
+          </tr>
+          <tr>
+            <td><code>input</code></td>
+            <td>Torque limits</td>
+            <td><code>u_lower</code>, <code>u_upper</code>, <code>c_cons_input</code>, <code>k_cons_input</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section> -->
+
+    <!-- ==================== USAGE ====================
+    <section id="usage">
+      <h2>Quick Start</h2>
+
+      <h3>Installation</h3>
+      <pre><code># Clone and set up environment
+conda env create -f ps_aghf/new_ps_aghf_v1_env.yml
+conda activate ps_aghf_v1
+
+# Build C++ backend
+cd ps_aghf/cpp &amp;&amp; make
+
+# Set Python path
+export PYTHONPATH="/path/to/AGHF/ps_aghf/src:/path/to/AGHF/ps_aghf/src/ps_aghf"</code></pre>
+
+      <h3>Running Experiments</h3>
+      <pre><code># Experiment 2 — sphere obstacles
+python timing_scripts/constrained/augLag_exp2.py
+
+# Experiment 3 — box constraints
+python timing_scripts/constrained/augLag_testing.py</code></pre>
+
+      <h3>Python API</h3>
+      <pre><code>from ps_aghf.experiment import Experiment
+from ps_aghf.parameter_set import ParameterSetActivatedCompositeALM
+import numpy as np
+
+# Define boundary states
+X0 = np.array([q_start, qd_start]).flatten()
+Xf = np.array([q_end, qd_end]).flatten()
+
+# Configure solver
+pset = ParameterSetActivatedCompositeALM(
+    p=7, N=7, X0=X0, Xf=Xf,
+    name="my_experiment",
+    s_max=500, k=1e5,
+    abs_tol=1e-4, rel_tol=1e-4,
+    method_name="cvode",
+    max_steps=int(1e8),
+    j_type=j_type,
+    fp_urdf=fp_urdf,
+    constraint_list=constraint_list
+)
+
+# Run two-phase optimization
+experiment = Experiment(
+    parameter_sets_ph2=[pset],
+    timeout=60,
+    folder_store="./results"
+)
+result_states, result_multipliers = experiment.run_ALM_two_phase(
+    pset, pset_ph1=pset_ph1,
+    mode="ALM", skip_ph1=False, force_ph2=True
+)</code></pre>
+    </section> -->
+
+    <!-- ==================== RESULTS ==================== -->
+    <section id="results">
+      <h2>Results</h2>
+      <p>
+        MAGMA was validated across a variety of challenging trajectory generation problems
+        featuring obstacles, state limits, and actuation limits, and evaluated against
+        state-of-the-art solvers.
+      </p>
+
+      <!-- <h3>Obstacle Avoidance (Kinova Gen3, Random Sphere Obstacles)</h3>
+      <p>
+        MAGMA shows 100% success rate across a series of scenarios with randomly placed sphere obstacles, consistently finding feasible trajectories
+      </p> -->
+      <!-- <table>
+        <thead>
+          <tr>
+            <th>Solver</th>
+            <th>Success Rate</th>
+            <th>Avg. Solve Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>MAGMA</strong></td>
+            <td><strong>100%</strong></td>
+            <td><strong>4.83 s</strong></td>
+          </tr>
+          <tr>
+            <td>Aligator</td>
+            <td>83%</td>
+            <td>29.89 s</td>
+          </tr>
+          <tr>
+            <td>BLAZE</td>
+            <td>&mdash;</td>
+            <td>6.85 s</td>
+          </tr>
+          <tr>
+            <td>PHLAME</td>
+            <td>0%</td>
+            <td>&mdash;</td>
+          </tr>
+        </tbody>
+      </table> -->
+
+      <h3>Task-Based Scenarios</h3>
+      <p>
+        MAGMA was  tested in practical, task-oriented scenarios involving cuboid obstacles,
+        such as reaching into shelves and placing items in confined bins, reflecting real-world
+        industrial and domestic deployments.
+      </p>
+      <p>
+        Below are visualizations of MAGMA solving these scenarios.
+        <span style="color: #e67e22; font-weight: 600;">Orange</span> represents the initial guess,
+        <span style="font-weight: 600;">white</span> is the final optimized solution, and
+        <span style="color: #e74c3c; font-weight: 600;">red</span> denotes obstacles.
+      </p>
+
+      <div class="video-grid">
+        <div class="scene-cell">
+          <div class="scene-label">Scene 2</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene2/init.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Initial Guess</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene2/fin.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Final Solution</div>
+        </div>
+
+        <div class="scene-cell">
+          <div class="scene-label">Scene 4</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene4/init.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Initial Guess</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene4/fin.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Final Solution</div>
+        </div>
+
+        <div class="scene-cell">
+          <div class="scene-label">Scene 16</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene16/init.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Initial Guess</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene16/fin.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Final Solution</div>
+        </div>
+
+        <div class="scene-cell">
+          <div class="scene-label">Scene 18</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene18/init.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Initial Guess</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene18/fin.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Final Solution</div>
+        </div>
+
+        <div class="scene-cell">
+          <div class="scene-label">Scene 20</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene20/init.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Initial Guess</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene20/fin.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Final Solution</div>
+        </div>
+
+        <div class="scene-cell">
+          <div class="scene-label">Scene 21</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene21/init.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Initial Guess</div>
+          <video autoplay loop muted playsinline>
+            <source src="videos/scene21/fin.mp4" type="video/mp4">
+          </video>
+          <div class="vid-caption">Final Solution</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ==================== CITATION ==================== -->
+  <div class="container">
+    <section id="citation">
+      <h2>Citation</h2>
+      <pre><code>@article{magma2025,
+  title   = {MAGMA: Multiplier-Augmented Geometric Motion Algorithm},
+  author  = {Ramos Chuquiure, C{\'e}sar E. and Thakur, Vansh
+             and Enninful Adu, Challen and Vasudevan, Ram},
+  year    = {2025}
+}</code></pre>
+      <p style="margin-top: 0.8rem; font-size: 0.9rem; color: var(--muted);">
+        This work was supported by AFOSR MURI FA9550-23-1-0400.
+      </p>
+    </section>
+  </div>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer>
+    <p>MAGMA &mdash; Multiplier-Augmented Geometric Motion Algorithm &mdash; ROAHM Lab, University of Michigan</p>
+  </footer>
+
+</body>
+</html>
