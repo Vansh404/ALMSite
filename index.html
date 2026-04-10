@@ -124,14 +124,18 @@
 
     /* ---- Cover video ---- */
     .cover-video {
-      width: 100vw;
-      display: block;
-      background: #000;
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
     }
     .cover-video video {
       width: 100%;
-      height: auto;
+      max-height: 420px;
       display: block;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #000;
+      object-fit: cover;
     }
 
     /* ---- Videos ---- */
