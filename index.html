@@ -311,7 +311,7 @@
         <source src="videos/Sequence 01_3.mp4" type="video/mp4">
       </video>
       <figcaption>
-        <strong>Figure 1.</strong> MAGMA generates constraint-satisfying trajectories for a Kinova Gen3 manipulator across cluttered task-oriented scenes.
+         MAGMA generates constraint-satisfying trajectories for a Kinova Gen3 manipulator across cluttered task-oriented scenes.
       </figcaption>
     </figure>
   </div>
@@ -322,16 +322,32 @@
     <section id="abstract">
       <h2>Abstract</h2>
       <p>
-        MAGMA (Multiplier-Augmented Geometric Motion Algorithm) is a general trajectory
-        optimizer based on the Affine Geometric Heat Flow (AGHF). It incorporates an
-        augmented Lagrangian framework that is solved via a primal-dual flow.
+        Trajectory optimization for robots, from autonomous vehicles to manipulators and
+        legged systems, demands four things at once: <strong>speed</strong> for near real-time
+        planning, <strong>scalability</strong> to high-dimensional state spaces, support for
+        <strong>nonlinear dynamics and task constraints</strong>, and <strong>reliable convergence</strong>
+        from poor initial guesses. Existing methods struggle to satisfy all four simultaneously.
+        HJB-based dynamic programming is intractable beyond moderate dimensions. DDP variants are
+        fragile far from the optimum. Collocation-based nonlinear programs are slow and sensitive
+        to discretization.
       </p>
       <p>
-        Solving optimal control problems for high-dimensional  systems with
-        constraints is challenging due to nonlinear dynamics and non-convex feasible sets.
-        Prior AGHF-based approaches relied on penalty or barrier formulations, which
-        required extensive hyperparameter tuning and struggled when cost minimization
-        and constraint satisfaction competed.
+        The <strong>Affine Geometric Heat Flow (AGHF)</strong> reformulates trajectory optimization as
+        a PDE that evolves an infeasible trajectory toward dynamic feasibility, scaling gracefully to
+        high-dimensional systems. But prior AGHF solvers lean on penalty and barrier formulations to
+        enforce constraints, which forces hand-tuning of weights, brittle behavior when cost and
+        feasibility compete, and sensitivity to the initial guess.
+      </p>
+      <p>
+        We introduce <strong>MAGMA</strong> (Multiplier-Augmented Geometric Motion Algorithm), an
+        AGHF-based trajectory optimizer built on an <strong>augmented Lagrangian structure solved
+        via a primal-dual geometric flow</strong>. By co-evolving primal and dual variables,
+        MAGMA automatically balances optimality and constraint satisfaction. This eliminates
+        manual weight tuning, handles general nonlinear constraints and arbitrary cost functions,
+        and remains robust to poor initialization. We additionally develop an infinite-dimensional
+        primal-dual gradient flow model that provides a theoretical foundation for constrained
+        AGHF methods, and demonstrate MAGMA on high-dimensional manipulation tasks against
+        state-of-the-art solvers.
       </p>
     </section>
 
@@ -345,7 +361,7 @@
         </div>
         <div class="feature-card">
           <h3>Robust Initialization</h3>
-          <p>Barrier methods can be give rise to numerically large values in the gradient for bad initial guesses, MAGMA circumvents that completely!.</p>
+          <p>Barrier methods can be give rise to numerically large values in the gradient for bad initial guesses, MAGMA circumvents that completely!</p>
         </div>
         <div class="feature-card">
           <h3>High Accuracy</h3>
@@ -362,10 +378,10 @@
     <section id="method">
       <h2>Method</h2>
       <p>
-        MAGMA extends the AGHF equation to handle constraints by defining an
-        augmented primal-dual AGHF. It establishes a theoretical characterization
-        of the primal-dual AGHF, proving that MAGMA is a gradient flow on an
-        appropriately defined energy.
+        MAGMA extends the AGHF equation to handle constraints by coupling it with an
+        augmented Lagrangian structure, co-evolving primal trajectories alongside dual
+        multipliers. We characterize this flow theoretically, proving that MAGMA is a
+        gradient flow on an appropriately defined energy.
       </p>
       <p>
         The numerical implementation utilizes a pseudospectral method-of-lines approach.
